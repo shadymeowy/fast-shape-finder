@@ -23,5 +23,5 @@ the exact relative position of the position and attitude.
 Ellipse fit utilizes the general conic equation and a custom linear equation solver. Then, some checks are performed to decide whether or not
 the found conic equation corresponds to an ellipse.
 
-The code is optimized for branch and cache misses. It took only ~500 microseconds to find a red ellipse in a 1920x1080 photo, which includes
+The code is optimized for branch and cache misses. It takes only ~500 microseconds to find a red ellipse in a 1920x1080 photo, which includes
 an extensive amount of noise with the same color on Ryzen 4800H processor.
