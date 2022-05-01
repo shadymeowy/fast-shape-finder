@@ -9,10 +9,10 @@ This step is equivalent to converting images to HSV space, thresholding the indi
 However, this approach is generally quite slow since it involves extensive use of arithmetic operations like floating-point division.
 In my approach, all of them are applied in a single pass on the image. The "Edge detection" method used is quite primitive. It is simple thresholding across the horizontal or
 vertical axis and recording change points.
-Yet, it works quite reliable, given that the HSV filter is working reasonably. In this way, cache misses are minimized.
+Yet, it works quite reliable, given that the HSV filter is working reasonably. In this way, cache misses are minimized. It should be noted that this step does not
+scan the complete image. It uses an internal LCG to select rows or columns in a Monte Carlo manner.
 
-In the second step, a simple "noise reduction" algorithm is applied to acquired edge points. This step is optional, but it generally improves the
-efficiency of the third step significantly. It checks for the pixel-wise distance between edge points in the same row or column. If some portions
+In the second step, a simple "noise reduction" algorithm is applied to acquired edge points. This step is optional, but it generally significantly improves the third step's efficiency. It checks for the pixel-wise distance between edge points in the same row or column. If some portions
 are close to each other, this step merges them. If some portions are small enough, it eliminates them.
 
 In the third step, the RANSAC algorithm is applied to fit shapes. While only circles and ellipses are allowed at this point, the plan is
