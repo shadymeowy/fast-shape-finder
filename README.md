@@ -19,7 +19,7 @@ are close to each other, this step merges them. If some portions are small enoug
 In the third step, the RANSAC algorithm is applied to fit shapes. While only circles and ellipses are allowed at this point, the plan is
 to use vertices and edges to acquire the 2D perspective transformation of the shape. In this way, it will be possible to find arbitrary shapes 
 under perspective transformation. Later, that transformation will be combined with the known properties of the used camera, which will result in
-the exact relative position of the position and attitude.
+the exact relative position and attitude.
 
 Ellipse fit utilizes the general conic equation and a custom linear equation solver. Then, some checks are performed to decide whether or not
 the found conic equation corresponds to an ellipse.
