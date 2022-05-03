@@ -9,7 +9,6 @@ setup(
     ext_modules=[
         Extension(
             "fast_shape_finder", ["fast_shape_finder.pyx"],
-            include_dirs=[numpy.get_include()],
             extra_compile_args=cc_flags, extra_link_args=cc_flags
         ),
     ],
