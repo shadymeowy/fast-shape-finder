@@ -1,5 +1,5 @@
 # fast-shape-finder
-Finding simple geometric shapes quickly using RANSAC
+Finding simple geometric shapes quickly using RANSAC-based algorithms
 
 This is an attempt to apply RANSAC to find geometric shapes in images. The ultimate goal of this project is to find arbitrary shapes on any surface and to acquiring
 both the position and attitude information.
