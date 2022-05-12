@@ -52,24 +52,6 @@ cdef bint is_primary_color(unsigned char _c[3], hsv_bounds *b) nogil:
             and (c[1] - c[2])*b.hue_2_denominator <= (c[0] - c[2])*b.hue_2_numerator
         )
 
-cdef inline uint color_distance(uchar a[3], uchar b[3]) nogil:
-    return (1024+a[0]+b[0])*(a[0]-b[0])*(a[0]-b[0])+2048*(a[1]-b[1])*(a[1]-b[1])+(1534-(a[0]+b[0]))*(a[2]-b[2])*(a[2]-b[2])
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.nonecheck(False)
-@cython.profile(True)
-cpdef uint distance_mask(uchar[:,:,::view.contiguous] _image, uchar[:,::view.contiguous] _output, uchar r, uchar g, uchar b, uint threshold):
-    cdef:
-        uint n = _image.shape[0]*_image.shape[1]
-        unsigned char* _image2 = &_image[0, 0, 0]
-        unsigned char[3]* image = <unsigned char[3]*>_image2
-        unsigned char* output = &_output[0, 0]
-        uchar[3] color = [r, g, b]
-        
-    for i in range(n):
-        output[i] = 255*(color_distance(image[i], color) <= threshold)
-
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
@@ -83,71 +65,6 @@ cpdef uint hsv_mask(uchar[:,:,::view.contiguous] _image, uchar[:,::view.contiguo
         
     for i in range(n):
         output[i] = 255*is_primary_color(image[i], &bounds)
-        
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.nonecheck(False)
-@cython.cdivision(True)
-@cython.profile(True)
-cpdef uint simple_edge_distance(uchar[:,:,::view.contiguous] _image, int[:,::view.contiguous] _ps, uchar r, uchar g, uchar b, uint threshold, uint row_count, uint column_count):
-    cdef:
-        uint i = rand()
-        uint x, y, o, t
-        uint h = _image.shape[0]
-        uint w = _image.shape[1]
-        uint buff_size = _ps.shape[0]
-        uchar[3]* image = <uchar[3]*>&_image[0, 0, 0]
-        int[2]* ps = <int[2]*>&_ps[0, 0]
-        uchar[3] color = [r, g, b]
-        uint j = 0
-
-    for _ in range(row_count):
-        y = i%h
-        o = y*w
-        flag = 0
-        for x in range(w):
-            t = color_distance(image[o+x], color) <= threshold
-            if t and not flag:
-                if j >= buff_size:
-                    return j
-                ps[j] = [x, y]
-                j += 1
-                flag = 1
-            if not t and flag:
-                if j >= buff_size:
-                    return j
-                ps[j] = [x, y]
-                j += 1
-                flag = 0
-        if flag:
-            ps[j] = [x, y]
-            j += 1
-        i *= LCG_A
-        i += LCG_C
-        
-    for _ in range(column_count):
-        x = i%w
-        flag = 0
-        for y in range(h):
-            t = color_distance(image[y*w+x], color) <= threshold
-            if t and not flag:
-                if j >= buff_size:
-                    return j
-                ps[j] = [x, y]
-                j += 1
-                flag = 1
-            if not t and flag:
-                if j >= buff_size:
-                    return j
-                ps[j] = [x, y]
-                j += 1
-                flag = 0
-        if flag:
-            ps[j] = [x, y]
-            j += 1
-        i *= LCG_A
-        i += LCG_C
-    return j
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -298,7 +215,7 @@ cpdef Circle ransac_circle(int[:,::view.contiguous] _ps, uint count, int min_r, 
     return best
 
 @cython.cdivision(True)
-cdef inline uint points_to_circle(uint p[3][2], Circle *r) nogil:
+cdef inline uint points_to_circle(uint p[3][2], Circle *r) nogil: # Benchmark will it be faster to use solve_matrix
     cdef:
         int c1 = (p[0][0]*p[0][0]+p[0][1]*p[0][1])
         int c2 = (p[1][0]*p[1][0]+p[1][1]*p[1][1])
@@ -312,7 +229,7 @@ cdef inline uint points_to_circle(uint p[3][2], Circle *r) nogil:
         return 1
     r.x=-B//A2
     r.y=-C//A2
-    r.r=<uint>sqrt(<double>(r.x*r.x+r.y*r.y-D/A))
+    r.r=<uint>sqrt(<double>(r.x*r.x+r.y*r.y-D/A)) #TODO
     return 0
 
 cdef struct Ellipse:
