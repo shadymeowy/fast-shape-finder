@@ -11,7 +11,7 @@ In my approach, all of them are applied in a single pass on the image. It also d
 The "edge detection" method used is quite primitive. It is simple thresholding across the horizontal or
 vertical axis and recording the color change points.
 Yet, it works pretty reliably, given that the HSV filter is working reasonably. In this way, cache misses are minimized. It should be noted that this step does not
-scan the complete image. It uses an internal LCG to select rows or columns in a Monte Carlo manner.
+scan the complete image. It uses Halton sequence to select rows or columns in a Monte Carlo manner.
 
 In the second step, a simple "noise reduction" algorithm is applied to acquired edge points. This step is optional, but it generally significantly improves the third step's efficiency. It checks the pixel-wise distance between edge points in the same row or column. If some portions
 are close to each other, this step merges them. If some portions are small enough, it eliminates them.

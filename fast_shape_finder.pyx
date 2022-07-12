@@ -3,6 +3,7 @@ from cython cimport view
 from libc.math cimport pow, sqrt, atan, pi, sin, cos
 from libc.time cimport time
 from libc.stdlib cimport srand, rand
+from libc.stdint cimport uint32_t
 
 ctypedef unsigned int uint
 ctypedef unsigned char uchar
@@ -66,6 +67,14 @@ cpdef uint hsv_mask(uchar[:,:,::view.contiguous] _image, uchar[:,::view.contiguo
     for i in range(n):
         output[i] = 255*is_primary_color(image[i], &bounds)
 
+cdef inline uint32_t reverse_bits(uint32_t n) nogil:
+    # n = (n << 16) | (n >> 16)
+    n = ((n & 0x00ff00ffu) << 8) | ((n & 0xff00ff00u) >> 8)
+    n = ((n & 0x0f0f0f0fu) << 4) | ((n & 0xf0f0f0f0u) >> 4)
+    n = ((n & 0x33333333u) << 2) | ((n & 0xccccccccu) >> 2)
+    n = ((n & 0x55555555u) << 1) | ((n & 0xaaaaaaaau) >> 1)
+    return n
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
@@ -73,8 +82,7 @@ cpdef uint hsv_mask(uchar[:,:,::view.contiguous] _image, uchar[:,::view.contiguo
 @cython.profile(True)
 cpdef uint simple_edge_hsv(uchar[:,:,::view.contiguous] _image, int[:,::view.contiguous] _ps, hsv_bounds bounds, uint row_count, uint column_count):
     cdef:
-        uint i = rand()
-        uint x, y, o, t
+        uint x, y, o, t, i
         uint h = _image.shape[0]
         uint w = _image.shape[1]
         uint buff_size = _ps.shape[0]
@@ -82,8 +90,8 @@ cpdef uint simple_edge_hsv(uchar[:,:,::view.contiguous] _image, int[:,::view.con
         int[2]* ps = <int[2]*>&_ps[0, 0]
         uint j = 0
 
-    for _ in range(row_count):
-        y = i%h
+    for i in range(row_count):
+        y = (reverse_bits(i)*h)>>16
         o = y*w
         flag = 0
         for x in range(w):
@@ -103,11 +111,9 @@ cpdef uint simple_edge_hsv(uchar[:,:,::view.contiguous] _image, int[:,::view.con
         if flag:
             ps[j] = [x, y]
             j += 1
-        i *= LCG_A
-        i += LCG_C
         
-    for _ in range(column_count):
-        x = i%w
+    for i in range(column_count):
+        x = (reverse_bits(i)*w)>>16
         flag = 0
         for y in range(h):
             t = is_primary_color(image[y*w+x], &bounds)
@@ -126,8 +132,6 @@ cpdef uint simple_edge_hsv(uchar[:,:,::view.contiguous] _image, int[:,::view.con
         if flag:
             ps[j] = [x, y]
             j += 1
-        i *= LCG_A
-        i += LCG_C
     return j
 
 cdef struct Circle:
@@ -138,7 +142,7 @@ cdef struct Circle:
 @cython.wraparound(False)
 @cython.nonecheck(False)
 @cython.profile(True)
-cpdef uint simple_denoise(int[:,::view.contiguous] _ps_in, int[:,::view.contiguous] _ps_out, uint min_distance):
+cpdef uint simple_denoise(int[:,::view.contiguous] _ps_in, int[:,::view.contiguous] _ps_out, int min_distance):
     cdef:
         uint in_size = _ps_in.shape[0]
         uint out_size = _ps_in.shape[0]
@@ -173,7 +177,7 @@ cpdef uint simple_denoise(int[:,::view.contiguous] _ps_in, int[:,::view.contiguo
 @cython.nonecheck(False)
 @cython.cdivision(True)
 @cython.profile(True)
-cpdef Circle ransac_circle(int[:,::view.contiguous] _ps, uint count, int min_r, int max_r, uint delta) nogil:
+cpdef Circle ransac_circle(int[:,::view.contiguous] _ps, uint count, int min_r, int max_r, int delta) nogil:
     cdef:
         int[2]* ps = <int[2]*>&_ps[0, 0]
         uint i = rand()
@@ -242,6 +246,7 @@ cdef struct Ellipse:
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
+@cython.cdivision(True)
 cdef int solve_matrix(double m[5][6]) nogil:
     cdef:
         int i, e, j, k
