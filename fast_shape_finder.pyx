@@ -242,7 +242,7 @@ cdef struct Ellipse:
     double a
     double b
     double theta
-    
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
@@ -252,26 +252,24 @@ cdef int solve_matrix(double m[5][6]) nogil:
         int i, e, j, k
         double s
     for i in range(5):
-        if m[i][i]==0:
-            for e in range(i + 1, 5):
-                if m[e][i]!=0:
-                    for k in range(6):
-                        s = m[i][k]
-                        m[i][k] = m[e][k]
-                        m[e][k] = s
-                    break
-            else:
-                return 1
+        for e in range(i + 1, 5):
+            if m[i][i] == 0 or (m[i][i] < m[e][i] and m[e][i] != 0):
+                for k in range(6):
+                    s = m[i][k]
+                    m[i][k] = m[e][k]
+                    m[e][k] = s
         t = m[i][i]
-        for e in range(i,6):
+        if t == 0:
+            return 1
+        for e in range(i, 6):
             m[i][e] /= t
-        for e in range(i + 1,5):
+        for e in range(i + 1, 5):
             t = m[e][i]
-            for j in range(i,6):
+            for j in range(i, 6):
                 m[e][j] -= m[i][j] * t
-    for i in reversed(range(1,5)):
+    for i in reversed(range(1, 5)):
         for e in range(i):
-            for j in range(5,6):
+            for j in range(5, 6):
                 m[e][j] -= m[i][j] * m[e][i]
             m[e][i] = 0
     return 0
