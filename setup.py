@@ -2,8 +2,8 @@ from setuptools import setup
 from setuptools.extension import Extension
 from Cython.Build import cythonize
 
-# cc_flags = ['-O3', '-march=native', '-mtune=native']
-cc_flags = ['-O2']
+cc_flags = ['-O3', '-march=native', '-mtune=native', '-fopenmp']
+# cc_flags = ['-O2']
 
 modules = cythonize([
     Extension(

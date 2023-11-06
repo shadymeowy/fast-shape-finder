@@ -1,23 +1,14 @@
-from fast_shape_finder import simple_edge_hsv, ransac_ellipse, simple_denoise
+from fast_shape_finder import simple_edge_hsv, ransac_ellipse, simple_denoise, calculate_lch_bounds
 import numpy as np
 import matplotlib.pyplot as plt
 from math import pi
 import cv2
 
 # HSV constraints for reddish colors
-bounds = {
-    "primary_index": 0,
-    "secondary_index_1": 1,
-    "secondary_index_2": 2,
-    "value": 102,
-    "saturation_numerator": 5,
-    "saturation_denominator": 10,
-    "hue_1_numerator": 6,
-    "hue_1_denominator": 100,
-    "hue_2_numerator": 6,
-    "hue_2_denominator": 10,
-}
-
+hue_limit = np.deg2rad(-30), np.deg2rad(+30)
+chroma_limit = 0.3, 1.
+intensity_limit = 0.2, 1.
+bounds = calculate_lch_bounds(hue_limit, chroma_limit, intensity_limit)
 
 def plot_ellipse(x, y, a, b, theta):
     o = np.linspace(0, 2 * np.pi)
@@ -53,7 +44,7 @@ pps = np.zeros((2048, 2), dtype="int32")
 pps_d = np.zeros((2048, 2), dtype="int32")
 
 # Extract the edge points
-ln = simple_edge_hsv(image, pps, bounds, 256, 0)
+ln = simple_edge_hsv(image, pps, bounds._asdict(), 256, 256)
 print("Number of edge points", ln)
 
 # Apply denoising to the edge points
