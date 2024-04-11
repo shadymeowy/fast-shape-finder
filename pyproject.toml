@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=42", "wheel", "Cython"]
+requires = ["setuptools>=42", "wheel", "Cython", "cibuildwheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -17,3 +17,19 @@ Repository = "https://github.com/shadymeowy/fast-shape-finder"
 
 [tool.setuptools]
 py-modules = ["fast_shape_finder"]
+
+[tool.cibuildwheel]
+# Build on manylinux, macOS, and Windows
+build = "cp38-* cp39-* cp310-* cp311-* cp312-*"
+skip = "*_i686"
+manylinux-x86_64-image = "manylinux_2_28"
+manylinux-aarch64-image = "manylinux_2_28"
+
+[tool.cibuildwheel.linux]
+archs = "x86_64 aarch64"
+
+[tool.cibuildwheel.macos]
+archs = "x86_64 arm64"
+
+[tool.cibuildwheel.windows]
+archs = "x86_64"
