@@ -29,7 +29,7 @@ jobs:
           CIBW_SKIP: "*-manylinux_i686"
           CIBW_ARCHS_LINUX: "x86_64 aarch64"
           CIBW_ARCHS_MACOS: "x86_64 arm64"
-          CIBW_ARCHS_WINDOWS: "x86_64"
+          CIBW_ARCHS_WINDOWS: "AMD64"
         run: python -m cibuildwheel --output-dir wheelhouse
 
       - uses: actions/upload-artifact@v4
