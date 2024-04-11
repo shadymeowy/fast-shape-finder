@@ -1,7 +1,13 @@
 from setuptools import setup
 from setuptools.extension import Extension
+import platform
 
-cc_flags = ['-O3', '-march=native', '-mtune=native']
+if platform.system() == 'Linux':
+    cc_flags = ['-O3']
+elif platform.system() == 'Windows':
+    cc_flags = ['/O2']
+else:
+    cc_flags = ['-O3']
 
 modules = [
     Extension(
