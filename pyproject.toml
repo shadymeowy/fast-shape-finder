@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=42", "wheel", "Cython"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fast-shape-finder"
+version = "1.0.0a1"
+description = "Finding simple geometric shapes quickly using RANSAC-based algorithms"
+authors = [{name = "Tolga Demirdal"}]
+readme = "README.md"
+license = {file = "LICENSE"}
+dependencies = [ "numpy" ]
+
+[project.urls]
+Homepage = "https://github.com/shadymeowy/fast-shape-finder"
+Repository = "https://github.com/shadymeowy/fast-shape-finder"
+
+[tool.setuptools]
+py-modules = ["fast_shape_finder"]
