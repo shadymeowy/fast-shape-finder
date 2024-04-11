@@ -272,6 +272,66 @@ cpdef int simple_edge_hsv(uchar[:,:,::view.contiguous] _image, int[:,::view.cont
     return j
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.nonecheck(False)
+@cython.cdivision(True)
+@cython.profile(True)
+cpdef int simple_edge(unsigned char[:,::view.contiguous] _image, int[:,::view.contiguous] _ps, int row_count, int column_count):
+    cdef:
+        int x, y, o, t, i
+        int h = _image.shape[0]
+        int w = _image.shape[1]
+        int buff_size = _ps.shape[0]
+        uchar *image = &_image[0, 0]
+        int[2]* ps = <int[2]*>&_ps[0, 0]
+        int j = 0
+
+    for i in range(row_count):
+        y = (reverse_bits(i)*h)>>16
+        o = y*w
+        flag = 0
+        for x in range(w):
+            t = image[o+x] > 0
+            if t and not flag:
+                if j >= buff_size:
+                    return j
+                ps[j] = [x, y]
+                j += 1
+                flag = 1
+            if not t and flag:
+                if j >= buff_size:
+                    return j
+                ps[j] = [x, y]
+                j += 1
+                flag = 0
+        if flag:
+            ps[j] = [x, y]
+            j += 1
+        
+    for i in range(column_count):
+        x = (reverse_bits(i)*w)>>16
+        flag = 0
+        for y in range(h):
+            t = image[y*w+x]
+            if t and not flag:
+                if j >= buff_size:
+                    return j
+                ps[j] = [x, y]
+                j += 1
+                flag = 1
+            if not t and flag:
+                if j >= buff_size:
+                    return j
+                ps[j] = [x, y]
+                j += 1
+                flag = 0
+        if flag:
+            ps[j] = [x, y]
+            j += 1
+    return j
+
+
 @cython.wraparound(False)
 @cython.nonecheck(False)
 @cython.profile(True)
@@ -303,6 +363,28 @@ cpdef int simple_denoise(int[:,::view.contiguous] _ps_in, int[:,::view.contiguou
                 j += 2
             head = ps_in[i]
             tail = ps_in[i+1]
+    return j
+
+
+@cython.wraparound(False)
+@cython.nonecheck(False)
+@cython.profile(True)
+cpdef int remove_inliers(int[:,::view.contiguous] _ps_in, int[:,::view.contiguous] _ps_out, uint8_t[::view.contiguous] _ms):
+    cdef:
+        int in_size = _ps_in.shape[0]
+        int out_size = _ps_in.shape[0]
+        uint8_t* ms = &_ms[0]
+    if in_size == 0:
+        return 0
+    cdef:
+        int[2]* ps_in = <int[2]*>&_ps_in[0, 0]
+        int[2]* ps_out = <int[2]*>&_ps_out[0, 0]
+        int i, j
+    j = 0
+    for i in range(in_size):
+        if not ms[i]:
+            ps_out[j] = ps_in[i]
+            j += 1
     return j
 
 
@@ -562,7 +644,7 @@ cdef inline void line_shift(Line l, int[3] c, int delta) noexcept nogil:
 @cython.nonecheck(False)
 @cython.cdivision(True)
 @cython.profile(True)
-cpdef Line ransac_line(int[:,::view.contiguous] _ps, uint8_t[::view.contiguous] _ms, int count, int delta):
+cpdef Line ransac_line(int[:,::view.contiguous] _ps, uint8_t[::view.contiguous] _ms, int count, int delta, double slope_limit):
     cdef:
         int[2]* ps = <int[2]*>&_ps[0, 0]
         uint8_t* ms = &_ms[0]
@@ -592,6 +674,8 @@ cpdef Line ransac_line(int[:,::view.contiguous] _ps, uint8_t[::view.contiguous] 
             i *= LCG_A
             i += LCG_C
         if points_to_line(p, &curr):
+            continue
+        if (curr.nx*curr.nx) <= slope_limit*slope_limit*(curr.nx*curr.nx+curr.ny*curr.ny):
             continue
         line_coeffs(curr, b1)
         line_coeffs(curr, b2)
